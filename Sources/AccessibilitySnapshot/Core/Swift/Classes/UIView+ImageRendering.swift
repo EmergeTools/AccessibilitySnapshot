@@ -53,11 +53,7 @@ extension UIView {
         let snapshot = renderer.image { context in
             switch viewRenderingMode {
             case .drawHierarchyInRect:
-                if bounds.width > UIView.tileSideLength || bounds.height > UIView.tileSideLength {
-                    drawTiledHierarchySnapshots(in: context, error: &error)
-                } else {
-                    drawHierarchy(in: bounds, afterScreenUpdates: true)
-                }
+                drawHierarchy(in: bounds, afterScreenUpdates: true)
 
             case .renderLayerInContext:
                 layer.render(in: context.cgContext)
@@ -112,81 +108,6 @@ extension UIView {
         }
 
         return UIImage(cgImage: cgImage)
-    }
-
-    private func drawTiledHierarchySnapshots(in context: UIGraphicsImageRendererContext, error: inout Error?) {
-        guard CATransform3DIsIdentity(layer.transform) else {
-            error = ImageRenderingError.containedViewHasUnsupportedTransform(transform: layer.transform)
-            return
-        }
-
-        let originalSafeArea = bounds.inset(by: safeAreaInsets)
-
-        let originalSuperview = superview
-        let originalOrigin = frame.origin
-        let originalAutoresizingMask = autoresizingMask
-        defer {
-            originalSuperview?.addSubview(self)
-            frame.origin = originalOrigin
-            autoresizingMask = originalAutoresizingMask
-        }
-
-        let frameView = UIView(frame: frame)
-        originalSuperview?.addSubview(frameView)
-        defer {
-            frameView.removeFromSuperview()
-        }
-
-        autoresizingMask = []
-        frame.origin = .zero
-
-        let containerViewController = UIViewController()
-        let containerView = containerViewController.view!
-        containerView.frame = frame
-        containerView.autoresizingMask = []
-        containerView.addSubview(self)
-        frameView.addSubview(containerView)
-
-        // Run the run loop for one cycle so that the safe area changes caused by restructuring the view hierarhcy are
-        // propogated. Then calculate the required additional safe area insets to create the equivalent original safe
-        // area. This new change will be propogated automatically when we draw the hierarchy for the first time.
-        RunLoop.current.run(until: Date())
-        let currentSafeArea = containerView.convert(bounds.inset(by: safeAreaInsets), from: self)
-        containerViewController.additionalSafeAreaInsets = UIEdgeInsets(
-            top: originalSafeArea.minY - currentSafeArea.minY,
-            left: originalSafeArea.minX - currentSafeArea.minX,
-            bottom: currentSafeArea.maxY - originalSafeArea.maxY,
-            right: currentSafeArea.maxX - originalSafeArea.maxX
-        )
-
-        let bounds = self.bounds
-        var tileRect: CGRect = .zero
-
-        while tileRect.minY < bounds.maxY {
-            tileRect.origin.x = bounds.minX
-            tileRect.size.height = min(tileRect.minY + UIView.tileSideLength, bounds.maxY) - tileRect.minY
-
-            while tileRect.minX < bounds.maxX {
-                tileRect.size.width = min(tileRect.minX + UIView.tileSideLength, bounds.maxX) - tileRect.minX
-                frameView.frame.size = tileRect.size
-
-                // Move the origin of the `frameView` and `containerView` such that the frame is over the right area of
-                // the snapshotted view, but the snapshotted view stays fixed relative to the `frameView`'s superview
-                // (so the view's position on screen doesn't change).
-                frameView.frame.origin = CGPoint(x: tileRect.minX, y: tileRect.minY)
-                containerView.frame.origin = CGPoint(x: -tileRect.minX, y: -tileRect.minY)
-
-                UIGraphicsImageRenderer(bounds: frameView.bounds)
-                    .image { _ in
-                        frameView.drawHierarchy(in: frameView.bounds, afterScreenUpdates: true)
-                    }
-                    .draw(at: tileRect.origin)
-
-                tileRect.origin.x += UIView.tileSideLength
-            }
-
-            tileRect.origin.y += UIView.tileSideLength
-        }
     }
 
     private static let tileSideLength: CGFloat = 2000
