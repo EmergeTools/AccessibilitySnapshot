@@ -132,11 +132,6 @@ public final class AccessibilitySnapshotView: SnapshotAndLegendView {
             }
         }
 
-        // Force a layout pass after the view is in the hierarchy so that the conversion to screen coordinates works
-        // correctly.
-        containedView.setNeedsLayout()
-        containedView.layoutIfNeeded()
-
         snapshotView.image = try containedView.renderToImage(
             monochrome: useMonochromeSnapshot,
             viewRenderingMode: viewRenderingMode
