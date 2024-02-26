@@ -105,7 +105,7 @@ public final class AccessibilitySnapshotView: SnapshotAndLegendView {
     /// This must be called _after_ the view is in the view hierarchy.
     ///
     /// - Throws: Throws a `RenderError` when the view fails to render a snapshot of the `containedView`.
-    public func parseAccessibility(useMonochromeSnapshot: Bool) throws {
+    public func parseAccessibility(useMonochromeSnapshot: Bool) throws -> [AccessibilityMarker] {
         // Clean up any previous markers.
         self.displayMarkers.forEach {
             $0.legendView.removeFromSuperview()
@@ -212,6 +212,7 @@ public final class AccessibilitySnapshotView: SnapshotAndLegendView {
             displayMarkers.append(displayMarker)
         }
         self.displayMarkers = displayMarkers
+      return markers
     }
 
     // MARK: - Public Static Properties
