@@ -601,7 +601,7 @@ private extension Bundle {
 
     private final class Sentinel {}
 
-    static var accessibilitySnapshotResources: Bundle = {
+    @MainActor static var accessibilitySnapshotResources: Bundle = {
         #if SWIFT_PACKAGE
         return Bundle.module
         #else
