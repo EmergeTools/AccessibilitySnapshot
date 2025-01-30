@@ -226,12 +226,12 @@ public class SnapshotAndLegendView: UIView {
 
 private extension CGFloat {
 
-    func floorToPixel(in source: UIWindow?) -> CGFloat {
+  @MainActor func floorToPixel(in source: UIWindow?) -> CGFloat {
         let scale = source?.screen.scale ?? 1
         return floor(self * scale) / scale
     }
 
-    func ceilToPixel(in source: UIWindow?) -> CGFloat {
+  @MainActor func ceilToPixel(in source: UIWindow?) -> CGFloat {
         let scale = source?.screen.scale ?? 1
         return ceil(self * scale) / scale
     }
